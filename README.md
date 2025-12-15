@@ -150,7 +150,6 @@ Screenshots
 (Add actual screenshots in your repository for better visualization)
 
 Login Screen
-![Login Page/Reguster](relative/path/to/image.png)
 
 Admin Dashboard
 
