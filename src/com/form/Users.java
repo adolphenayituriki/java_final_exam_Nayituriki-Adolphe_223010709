@@ -154,5 +154,8 @@ public class Users extends JFrame implements ActionListener {
            }
            setLocationRelativeTo(null);
     }
+    public static void main(String[] args){
+            Users user = new Users();
+    }
 }
 
