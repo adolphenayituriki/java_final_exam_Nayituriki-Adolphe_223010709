@@ -7,6 +7,8 @@
 
 E-BUY SMART is a **Java Swing-based Desktop Application** for managing e-commerce operations including users, products, orders, and payments. It uses **MySQL** via **JDBC** and is designed for small to medium online businesses or local offline networks.
 
+**WIREFRAME SYSTEM DESIGN LINK: https://balsamiq.cloud/s2st4s4/pi50kiy/rBD8A**
+
 ---
 
 ## Table of Contents
@@ -175,12 +177,5 @@ Support for multiple languages
 
 License
 This project is open-source for educational purposes. See LICENSE file for details.
-
-GitHub Repository: https://github.com/adolphenayituriki/E-CommercePortalSystem
-
-yaml
-Copy code
-
----
 
  
