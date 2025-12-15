@@ -5,7 +5,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)](https://dev.mysql.com/downloads/mysql/)
 [![License](https://img.shields.io/badge/License-Educational-green)](#license)
 
-E-BUY SMART is a **Java Swing-based Desktop Application** for managing e-commerce operations including users, products, orders, and payments. It uses **MySQL** via **JDBC** and is designed for small to medium online businesses or local offline networks.
+E-BUY SMART is a desktop-based e-commerce management system developed using Java Swing. It provides a multi-tabbed interface for administrators to efficiently manage users, products, orders, and payments. Customers can register, log in, browse products by category, place orders, and make payments securely. The system connects to a MySQL database through JDBC, ensuring reliable and secure data storage and retrieval. Administrators can perform CRUD operations on all entities and generate reports in CSV/Excel format. The application incorporates role-based access control and password hashing to enhance security. Its intuitive interface simplifies navigation and reduces manual errors in business operations. Overall, E-BUY SMART automates core e-commerce processes, improving efficiency, accuracy, and the overall user experience.
 
 **WIREFRAME SYSTEM DESIGN LINK: https://balsamiq.cloud/s2st4s4/pi50kiy/rBD8A**
 
@@ -18,9 +18,7 @@ E-BUY SMART is a **Java Swing-based Desktop Application** for managing e-commerc
 - [Usage](#usage)
 - [Package Structure](#package-structure)
 - [Database Design](#database-design)
-- [Screenshots](#screenshots)
 - [Future Enhancements](#future-enhancements)
-- [License](#license)
 
 ---
 
