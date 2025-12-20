@@ -1,24 +1,24 @@
 package com.form;
 
 import com.panel.AddProductPanel;
-import com.panel.AdminPanel;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
-import java.nio.file.*;
 import java.sql.*;
 
 public class AdminProductPanel extends JFrame implements ActionListener {
 
     private JTabbedPane tabbedPane = new JTabbedPane();
-
     private JPanel usersPanel = new JPanel();
     private JTable productTable = new JTable();
     private JScrollPane usersScrollPane = new JScrollPane(productTable);
+
     private JTextField searchField = new JTextField(20);
     private JButton searchBtn = new JButton("🔍 Search Product");
     private JButton refreshBtn = new JButton("🔄 Refresh");
@@ -27,11 +27,7 @@ public class AdminProductPanel extends JFrame implements ActionListener {
     private JButton deleteBtn = new JButton("🗑️ Delete");
     private JLabel totalProducts = new JLabel("Total Products: 0");
 
-    // === Logout ===
     private JButton returnBackBtn = new JButton("BACK TO HOME");
-
-    // Uploads folder
-    private static final String UPLOAD_DIR = "uploads";
 
     public AdminProductPanel() {
         setTitle("Admin Dashboard | E-BUY SMART");
@@ -52,18 +48,41 @@ public class AdminProductPanel extends JFrame implements ActionListener {
         returnBackBtn.addActionListener(this);
         addProductBtn.addActionListener(this);
 
-        // double click to view
+        // Double click placeholder
         productTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && productTable.getSelectedRow() != -1) {
                     int row = productTable.convertRowIndexToModel(productTable.getSelectedRow());
-
+                    // Optional: open view/edit window
                 }
             }
         });
 
-        // load initial data
+        // Load initial data
         loadProducts();
+
+        // Dynamic search: live filter while typing
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>((DefaultTableModel) productTable.getModel());
+        productTable.setRowSorter(sorter);
+
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { filter(); }
+
+            private void filter() {
+                String text = searchField.getText().trim();
+                if (text.isEmpty()) {
+                    sorter.setRowFilter(null); // show all if empty
+                } else {
+                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1)); // filter by Name
+                }
+            }
+        });
+
         setVisible(true);
     }
 
@@ -73,24 +92,26 @@ public class AdminProductPanel extends JFrame implements ActionListener {
 
         // Header: title + logout + search
         JPanel header = new JPanel(new BorderLayout());
-
         returnBackBtn.setBackground(new Color(220, 53, 69));
         returnBackBtn.setForeground(Color.WHITE);
         returnBackBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         header.add(returnBackBtn, BorderLayout.EAST);
 
-        // Search panel
+        searchBtn.setBackground(new Color(10, 132, 132));
+        searchBtn.setForeground(Color.WHITE);
+        addProductBtn.setBackground(new Color(132, 57, 10));
+        addProductBtn.setForeground(Color.WHITE);
+
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.add(new JLabel("Search  Product:"));
+        searchPanel.add(new JLabel("Search Product:"));
         searchPanel.add(searchField);
         searchPanel.add(searchBtn);
         searchPanel.add(refreshBtn);
-
         header.add(searchPanel, BorderLayout.SOUTH);
 
         usersPanel.add(header, BorderLayout.NORTH);
 
-        // Actions panel (edit, delete, total)
+        // Actions panel
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         actionsPanel.add(editBtn);
         actionsPanel.add(deleteBtn);
@@ -103,7 +124,7 @@ public class AdminProductPanel extends JFrame implements ActionListener {
     }
 
     private void deleteProduct(int productId) {
-        try(Connection conn = com.utils.DB.getConnection()){
+        try (Connection conn = com.utils.DB.getConnection()) {
             String query = "DELETE FROM products WHERE ProductID = ?";
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setInt(1, productId);
@@ -113,10 +134,10 @@ public class AdminProductPanel extends JFrame implements ActionListener {
             JOptionPane.showMessageDialog(this, "Failed to delete product");
         }
     }
-    //Editing product information
+
     private void editProduct(int productId, String productName, String description, String category, double price, int stockQuantity) {
-        try(Connection conn = com.utils.DB.getConnection()){
-            String query = "UPDATE products SET Name = ?, Description = ?, Category = ?, Price = ?, StockQuantity = ? WHERE ProductID = ?";
+        try (Connection conn = com.utils.DB.getConnection()) {
+            String query = "UPDATE products SET Name = ?, Description = ?, CategoryID = ?, Price = ?, StockQuantity = ? WHERE ProductID = ?";
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setString(1, productName);
             ps.setString(2, description);
@@ -129,7 +150,7 @@ public class AdminProductPanel extends JFrame implements ActionListener {
             if (row > 0) {
                 JOptionPane.showMessageDialog(this, "✅ Product Updated Successfully");
                 loadProducts();
-            }else  {
+            } else {
                 JOptionPane.showMessageDialog(this, "No Product was Updated");
             }
         } catch (SQLException e) {
@@ -138,12 +159,9 @@ public class AdminProductPanel extends JFrame implements ActionListener {
         }
     }
 
-
-    //loading products
     public void loadProducts() {
-        // Table model & table
         DefaultTableModel model = new DefaultTableModel();
-        model.setColumnIdentifiers(new String[]{"ProductID", "Name", "Description", "CategoryID", "Price per product", "StockQuantity", "CreatedAt"});
+        model.setColumnIdentifiers(new String[]{"ProductID", "Name", "Description", "CategoryID", "Price", "StockQuantity", "CreatedAt"});
         productTable.setModel(model);
         productTable.setAutoCreateRowSorter(true);
         productTable.setRowHeight(26);
@@ -151,22 +169,27 @@ public class AdminProductPanel extends JFrame implements ActionListener {
         productTable.setGridColor(Color.LIGHT_GRAY);
 
         try (Connection conn = com.utils.DB.getConnection()) {
-            String sql = "SELECT ProductID, Name, Description, CategoryID, Price, StockQuantity,CreatedAt  FROM products ORDER BY ProductID ASC";
+            String sql = "SELECT ProductID, Name, Description, CategoryID, Price, StockQuantity, CreatedAt FROM products ORDER BY ProductID ASC";
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
+            int totalAvailable = 0;
             while (rs.next()) {
+                int stock = rs.getInt("StockQuantity");
                 model.addRow(new Object[]{
                         rs.getInt("ProductID"),
                         rs.getString("Name"),
                         rs.getString("Description"),
-                        rs.getString("CategoryID"),
-                        rs.getString("Price"),
-                        rs.getInt("StockQuantity"),
+                        rs.getInt("CategoryID"),
+                        rs.getDouble("Price"),
+                        stock,
                         rs.getTimestamp("CreatedAt")
                 });
+                if (stock > 0) totalAvailable++;
             }
-            // center align ProductID
+
+            totalProducts.setText("Total Products Available: " + totalAvailable);
+
             DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
             centerRenderer.setHorizontalAlignment(JLabel.CENTER);
             productTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
@@ -175,88 +198,51 @@ public class AdminProductPanel extends JFrame implements ActionListener {
 
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "⚠️ Failed to load products: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Failed to load products: " + ex.getMessage());
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-       Object src = e.getSource();
+        Object src = e.getSource();
 
-       //adding product to the list
         if (src == addProductBtn) {
             new AddProductPanel().setVisible(true);
-        }
-        // this if where i refreshed my products
-        else if (src == refreshBtn) {
+        } else if (src == refreshBtn) {
             loadProducts();
-
-            //progress bar before refreshing confirmation message message
-            JProgressBar progressBar = new JProgressBar(0,100);
-            progressBar.setStringPainted(true);
-            JOptionPane pane = new JOptionPane(progressBar,JOptionPane.INFORMATION_MESSAGE,JOptionPane.DEFAULT_OPTION,null,new Object[]{},null);
-            JDialog dialog = pane.createDialog("Refreshing Processing....");
-            new Thread(() -> {
-                for(int i = 0; i < 100; i++){
-                    progressBar.setValue(i);
-                    try{Thread.sleep(30);}
-                    catch (InterruptedException ex){
-                        ex.printStackTrace();
-                    }
-                }
-                dialog.dispose();
-            }).start();
-            dialog.setVisible(true);
-            JOptionPane.showMessageDialog(this, "Now your products are refreshed well!");
-        }
-        // condition to search a product
-        else if (src == searchBtn) {
-            String search = searchField.getText().trim();
-            if (search.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter a product name!");
-                return;
-            }
-            searchField.setText(search);
-        }
-        // condition to edit any product within the list
-        else if (src == editBtn) {
+            JOptionPane.showMessageDialog(this, "Products refreshed!");
+        } else if (src == editBtn) {
             int row = productTable.getSelectedRow();
             if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Please select a product to be edited!");
+                JOptionPane.showMessageDialog(this, "Please select a product to edit!");
                 return;
             }
             int productID = (int) productTable.getValueAt(row, 0);
-            new AddProductPanel().setVisible(true);
-        }
-        //delete
-        else if (src == deleteBtn) {
+            new AddProductPanel().setVisible(true); // You can modify AddProductPanel to accept productID for editing
+        } else if (src == deleteBtn) {
             int row = productTable.getSelectedRow();
             if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Please select a product to be deleted!");
+                JOptionPane.showMessageDialog(this, "Please select a product to delete!");
                 return;
             }
             int productID = (int) productTable.getValueAt(row, 0);
             int confirm = JOptionPane.showConfirmDialog(this, "Delete this product?");
-            if (confirm == JOptionPane.YES_OPTION){
+            if (confirm == JOptionPane.YES_OPTION) {
                 deleteProduct(productID);
-            loadProducts();
-            JOptionPane.showMessageDialog(this, "product deleted successfully !");
-        }}
-        else if (src == returnBackBtn) {
-            int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?");
-            if (confirm == JOptionPane.YES_OPTION){
-                dispose();
-
+                loadProducts();
+                JOptionPane.showMessageDialog(this, "Product deleted successfully!");
             }
+        } else if (src == returnBackBtn) {
+            int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                dispose();
+            }
+        } else if (src == searchBtn) {
+            searchField.requestFocus(); // optional
         }
-
-    }
-
-    private void deleteBtn(int productID) {
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(AdminProductPanel::new);
     }
 }
-
