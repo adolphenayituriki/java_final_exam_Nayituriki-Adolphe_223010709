@@ -29,8 +29,9 @@ public class CategoryProductQuery  extends JFrame implements ActionListener {
         setTitle("Products in "+categoryName +"E-Commerce Portal System | E-BUY SMART");
         setSize(1100,700);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout(10,10));
+        setResizable(false);
 
         //Header
         JLabel header = new JLabel("Category Product: "+ categoryName, JLabel.CENTER);
@@ -164,7 +165,7 @@ public class CategoryProductQuery  extends JFrame implements ActionListener {
                                 ex.printStackTrace();
                             }
                         }
-                            dialog.dispose();
+                        dialog.dispose();
                     }).start();
                     dialog.setVisible(true);
 

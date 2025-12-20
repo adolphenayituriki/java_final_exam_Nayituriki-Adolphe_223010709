@@ -3,299 +3,558 @@ package com.panel;
 import com.form.AdminProductPanel;
 import com.form.AdminUserPanelManagement;
 import com.form.Users;
+import com.utils.Session;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
-import java.io.FileWriter;
 
 public class AdminPanel extends JFrame implements ActionListener {
-
-    //AUTH SESSION
-    private int loggedInUserId;
-    private String loggedInRole;
-
     private JLabel welcomeLabel;
-    private JTabbedPane tabbedPane = new JTabbedPane();
+    JTabbedPane tabbedPane = new JTabbedPane();
 
-    //PANELS
-    private JPanel usersPanel = new JPanel();
-    private JPanel productPanel = new JPanel();
-    private JPanel orderPanel = new JPanel();
-    private JPanel settingPanel = new JPanel();
+    //my panels
+    JPanel usersPanel = new JPanel();
+    JPanel productPanel = new JPanel();
+    JPanel orderPanel = new JPanel();
+    JPanel shippedPanel = new JPanel();
+    JPanel settingPanel = new JPanel();
 
-    private JTable usersTable = new JTable();
-    private JTable productTable = new JTable();
-    private JTable orderTable = new JTable();
+    JTable usersTable = new JTable();
+    JTable productTable = new JTable();
+    JTable orderTable = new JTable();
+    JTable shippedTable = new JTable();
 
-    private JScrollPane usersScrollPane = new JScrollPane(usersTable);
-    private JScrollPane productScrollPane = new JScrollPane(productTable);
-    private JScrollPane orderScrollPane = new JScrollPane(orderTable);
+    JScrollPane usersScrollPane = new JScrollPane(usersTable);
+    JScrollPane productScrollPane = new JScrollPane(productTable);
+    JScrollPane orderScrollPane = new JScrollPane(orderTable);
+    JScrollPane shippedScrollPane = new JScrollPane(shippedTable);
 
-    private JButton exportButton = new JButton("Export Data");
-    private JButton refreshButton = new JButton("🔄 Refresh");
-    private JButton logoutButton = new JButton("Logout");
+    //buttons
+    JButton logoutButton = new JButton("Logout");
+    JButton exportButton = new JButton(" Export Data ");
 
-    private JButton viewOrderButton = new JButton("View Order");
-    private JButton approveOrderButton = new JButton("Approve Order");
-    private JButton rejectOrderButton = new JButton("Reject Order");
-    private JButton deleteOrderButton = new JButton("Delete Order");
 
-    public AdminPanel(int userId, String role, String fullname) {
 
-        this.loggedInUserId = userId;
-        this.loggedInRole = role;
+    //Order management buttons
+    JButton viewOrderButton = new JButton("View Order");
+    JButton approveOrderButton = new JButton("Approve Order");
+    JButton rejectOrderButton = new JButton("Reject Order");
+    JButton deleteOrderButton = new JButton("Delete Order");
 
-        if (!isAuthenticated()) {
-            JOptionPane.showMessageDialog(null, "Unauthorized Access!");
-            System.exit(0);
-        }
 
+    public AdminPanel(String fullname) {
         setTitle("E-BUY SMART | Admin Panel");
         setSize(1000, 650);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        setVisible(true);
+        //My headers
+        JPanel header =  new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
         header.setBackground(new Color(245, 245, 245));
+        header.setBorder(BorderFactory.createMatteBorder(10, 10, 10, 10, Color.GRAY));
 
-        JLabel appName = new JLabel("E-BUY SMART | ADMIN");
+        JLabel appName =  new JLabel(" © E-BUY SMART | ADMIN");
         appName.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
         welcomeLabel = new JLabel("Welcome, " + fullname);
-        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        welcomeLabel.setForeground(new Color(255, 96, 115));
+        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        welcomeLabel.setForeground(new Color(25, 96, 225));
 
-        JPanel headerRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        headerRight.setOpaque(false);
+        logoutButton.setBackground(new Color(245, 245, 245));
+        logoutButton.setForeground(Color.RED);
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        logoutButton.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 0, Color.GRAY));
+        logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        exportButton.setBackground(new Color(255, 193, 7));
-        refreshButton.setBackground(new Color(52, 152, 219));
-        logoutButton.setBackground(new Color(220, 53, 69));
+        exportButton.setBackground(new Color(245, 245, 245));
+        exportButton.setForeground(new Color(225, 160, 5));
+        exportButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        exportButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        exportButton.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, new Color(23, 132, 39)));
+        header.add(exportButton);
 
-        refreshButton.setForeground(Color.WHITE);
-        logoutButton.setForeground(Color.WHITE);
-
-        exportButton.addActionListener(this);
-        refreshButton.addActionListener(this);
-        logoutButton.addActionListener(this);
-
-        headerRight.add(exportButton);
-        headerRight.add(refreshButton);
-        headerRight.add(logoutButton);
-
-        header.add(appName, BorderLayout.WEST);
-        header.add(welcomeLabel, BorderLayout.CENTER);
-        header.add(headerRight, BorderLayout.EAST);
-
+        header.add(appName);
+        header.add(welcomeLabel);
+        header.add(logoutButton);
         add(header, BorderLayout.NORTH);
 
-        usersPanel.setLayout(new BorderLayout(10, 10));
-        usersPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        //this is a user tab
+        usersPanel.setLayout(new BorderLayout(10,10));
+        usersPanel.setBorder(BorderFactory.createEmptyBorder(10, 10,10,10));
         usersPanel.add(usersScrollPane, BorderLayout.CENTER);
 
         JButton manageUsersButton = new JButton("Manage Users");
-        manageUsersButton.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        manageUsersButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
         manageUsersButton.setBackground(new Color(15, 185, 115));
         manageUsersButton.setForeground(Color.WHITE);
         manageUsersButton.addActionListener(this);
         usersPanel.add(manageUsersButton, BorderLayout.SOUTH);
 
-        productPanel.setLayout(new BorderLayout(10, 10));
+        //this is a product tab
+        productPanel.setLayout(new BorderLayout(10,10));
         productPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         productPanel.add(productScrollPane, BorderLayout.CENTER);
 
         JButton manageProductsButton = new JButton("Manage Products");
-        manageProductsButton.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        manageProductsButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
         manageProductsButton.setBackground(new Color(15, 185, 115));
         manageProductsButton.setForeground(Color.WHITE);
         manageProductsButton.addActionListener(this);
         productPanel.add(manageProductsButton, BorderLayout.SOUTH);
 
-        orderPanel.setLayout(new BorderLayout(10, 10));
+        //This is an order tab
+        orderPanel.setLayout(new BorderLayout(10,10));
         orderPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         orderPanel.add(orderScrollPane, BorderLayout.CENTER);
 
+        //this is shipped tab
+        shippedPanel.setLayout(new BorderLayout(10,10));
+        shippedPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        shippedPanel.add(shippedScrollPane, BorderLayout.SOUTH);
+
+        //Bottom order management buttons
         JPanel orderButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        orderButtonPanel.setBackground(new Color(244, 244, 240));
 
-        Font font = new Font("Segoe UI", Font.BOLD, 18);
-        JButton[] orderButtons = {viewOrderButton, approveOrderButton, rejectOrderButton, deleteOrderButton};
+        viewOrderButton.setBackground(new Color(70, 180, 190));
+        viewOrderButton.setForeground(Color.WHITE);
+        approveOrderButton.setBackground(new Color(60, 129, 113));
+        approveOrderButton.setForeground(Color.WHITE);
+        rejectOrderButton.setBackground(new Color(255, 30, 113));
+        rejectOrderButton.setForeground(Color.WHITE);
+        deleteOrderButton.setBackground(new Color(220, 20, 60));
+        deleteOrderButton.setForeground(Color.WHITE);
 
-        for (JButton btn : orderButtons) {
-            btn.setFont(font);
-            btn.addActionListener(this);
-            orderButtonPanel.add(btn);
-        }
+        Font font = new Font("Segoe UI", Font.BOLD, 20);
+        viewOrderButton.setFont(font);
+        approveOrderButton.setFont(font);
+        rejectOrderButton.setFont(font);
+        deleteOrderButton.setFont(font);
+
+        orderButtonPanel.add(viewOrderButton);
+        orderButtonPanel.add(approveOrderButton);
+        orderButtonPanel.add(rejectOrderButton);
+        orderButtonPanel.add(deleteOrderButton);
 
         orderPanel.add(orderButtonPanel, BorderLayout.SOUTH);
 
+        //setting tab
         tabbedPane.addTab("Users", usersPanel);
         tabbedPane.addTab("Products", productPanel);
         tabbedPane.addTab("Orders", orderPanel);
+        tabbedPane.addTab("Shipped", shippedPanel);
+
         tabbedPane.addTab("Settings", settingPanel);
-        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 18));
+
+        tabbedPane.setBackground(new Color(244, 244, 240));
+        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
         add(tabbedPane, BorderLayout.CENTER);
 
+        //Adding event listeners to the buttons
+        logoutButton.addActionListener(this);
+        exportButton.addActionListener(this);
+        viewOrderButton.addActionListener(this);
+        approveOrderButton.addActionListener(this);
+        rejectOrderButton.addActionListener(this);
+        deleteOrderButton.addActionListener(this);
+
+        //setting all tables header format
+        Color tableColor = new Color(20, 125, 230);
+        Color tableForeground = new Color(255, 255, 255);
+        usersTable.getTableHeader().setBackground(tableColor);
+        productTable.getTableHeader().setBackground(tableColor);
+        orderTable.getTableHeader().setBackground(tableColor);
+        usersTable.setRowHeight(30);
+        usersTable.getTableHeader().setResizingAllowed(true);
+        productTable.setRowHeight(30);
+        productTable.getTableHeader().setResizingAllowed(true);
+        orderTable.setRowHeight(30);
+        orderTable.getTableHeader().setResizingAllowed(true);
+        shippedTable.setRowHeight(30);
+        shippedTable.getTableHeader().setResizingAllowed(true);
+        // header foreground color
+        usersTable.getTableHeader().setForeground(tableForeground);
+        productTable.getTableHeader().setForeground(tableForeground);
+        orderTable.getTableHeader().setForeground(tableForeground);
+        shippedTable.getTableHeader().setForeground(tableForeground);
+        shippedPanel.setBackground(new Color(24, 144, 240));
+        shippedTable.getTableHeader().setBackground(Color.BLACK);
+
+
+        //loading data from database
         loadUsersTable();
         loadProductsTable();
         loadOrdersTable();
-
-        setVisible(true);
+        loadShippedTable();
     }
 
-    public AdminPanel(String fullName) {
-    }
 
-    private boolean isAuthenticated() {
-        return loggedInUserId > 0 && "ADMIN".equalsIgnoreCase(loggedInRole);
-    }
 
-    private boolean isRowSelected(JTable table) {
-        if (table.getSelectedRow() == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a record first!");
-            return false;
-        }
-        return true;
-    }
-
-    private void loadUsersTable() {
-        DefaultTableModel model = new DefaultTableModel(
-                new Object[]{"UserID", "Username", "Email", "Full Name", "Role", "Created At"}, 0);
+    public void loadUsersTable(){
+        DefaultTableModel model = new DefaultTableModel();
+        model.setColumnIdentifiers(new Object[]{"UserID", "Username","Email", "Full Name", "Role", "Created At", "Last Login"});
         usersTable.setModel(model);
+        usersTable.setRowHeight(30);
 
-        try (Connection conn = com.utils.DB.getConnection();
-             PreparedStatement pst = conn.prepareStatement("SELECT * FROM Users");
-             ResultSet rs = pst.executeQuery()) {
-
-            while (rs.next()) {
+        try(Connection conn = com.utils.DB.getConnection()){
+            String sql = "SELECT UserID, Username, Email, FullName, Role, CreatedAt, LastLogin FROM Users ORDER BY UserID ASC";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+            while(rs.next()){
                 model.addRow(new Object[]{
                         rs.getInt("UserID"),
                         rs.getString("Username"),
                         rs.getString("Email"),
                         rs.getString("FullName"),
                         rs.getString("Role"),
-                        rs.getDate("CreatedAt")
+                        rs.getDate("CreatedAt"),
+                        rs.getDate("LastLogin")
                 });
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to load Users: "+e.getMessage());
         }
     }
 
-    private void loadProductsTable() {
-        DefaultTableModel model = new DefaultTableModel(
-                new Object[]{"ProductID", "Name", "CategoryID", "Price", "Stock"}, 0);
+    public void loadProductsTable(){
+        DefaultTableModel model = new DefaultTableModel();
+        model.setColumnIdentifiers(new Object[]{"ProductID", "Product Name", "Description", "Category ID", "Price", "Stock Quantity", "Created At"});
         productTable.setModel(model);
+        productTable.setRowHeight(30);
 
-        try (Connection conn = com.utils.DB.getConnection();
-             PreparedStatement pst = conn.prepareStatement("SELECT * FROM Products");
-             ResultSet rs = pst.executeQuery()) {
-
-            while (rs.next()) {
+        try(Connection conn = com.utils.DB.getConnection()){
+            String sql = "SELECT ProductID, Name, Description, CategoryID, Price, StockQuantity, CreatedAt FROM Products ORDER BY ProductID ASC";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+            while(rs.next()){
                 model.addRow(new Object[]{
                         rs.getInt("ProductID"),
                         rs.getString("Name"),
-                        rs.getInt("CategoryID"),
+                        rs.getString("Description"),
+                        rs.getString("CategoryID"),
                         rs.getInt("Price"),
-                        rs.getInt("StockQuantity")
+                        rs.getInt("StockQuantity"),
+                        rs.getDate("CreatedAt")
                 });
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to load Products: "+e.getMessage());
         }
     }
 
-    private void loadOrdersTable() {
-        DefaultTableModel model = new DefaultTableModel(
-                new Object[]{"OrderID", "UserID", "OrderNumber", "Status", "Total"}, 0);
+    public void loadOrdersTable(){
+        DefaultTableModel model = new DefaultTableModel();
+        model.setColumnIdentifiers(new String[]{"Order Id", "User ID","Order Number", "Date", "Status", "TotalAmount", "PaymentMethod", "Notes"});
         orderTable.setModel(model);
+        orderTable.setRowHeight(30);
 
-        try (Connection conn = com.utils.DB.getConnection();
-             PreparedStatement pst = conn.prepareStatement("SELECT * FROM Orders");
-             ResultSet rs = pst.executeQuery()) {
-
-            while (rs.next()) {
+        try(Connection conn = com.utils.DB.getConnection()){
+            String sql = "SELECT OrderId, UserID, OrderNumber, `Date`, Status, TotalAmount, PaymentMethod, Notes FROM Orders ORDER BY OrderId ASC";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+            while(rs.next()){
                 model.addRow(new Object[]{
-                        rs.getInt("OrderID"),
-                        rs.getInt("UserID"),
+                        rs.getInt("OrderId"),
+                        rs.getString("UserID"),
                         rs.getString("OrderNumber"),
+                        rs.getDate("Date"),
                         rs.getString("Status"),
-                        rs.getInt("TotalAmount")
+                        rs.getInt("TotalAmount"),
+                        rs.getString("PaymentMethod"),
+                        rs.getString("Notes")
                 });
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to load Orders: "+e.getMessage());
+        }
+        DefaultTableCellRenderer statusRenderer = new DefaultTableCellRenderer(){
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                if(value != null && value.toString().equalsIgnoreCase("Cancelled")){
+                    c.setForeground(Color.RED);
+                }
+                else if(value != null && value.toString().equalsIgnoreCase("Pending")){
+                    c.setForeground(new Color(255, 150, 50));
+                }
+                else if(value != null && value.toString().equalsIgnoreCase("Delivered")){
+                    c.setForeground(new Color(0, 140, 80));
+                }
+                else{
+                    c.setForeground(Color.GRAY);
+                }
+                return c;
+            }
+        };
+        orderTable.getColumnModel().getColumn(4).setCellRenderer(statusRenderer);
+    }
+
+    //Loading shipped table
+    public void loadShippedTable(){
+        DefaultTableModel model = new DefaultTableModel();
+        model.setColumnIdentifiers(new Object[]{"Shipment ID", "User ID", "Product ID","Created At"});
+        shippedTable.setModel(model);
+        shippedTable.setRowHeight(30);
+
+        try(Connection conn = com.utils.DB.getConnection()){
+            String sql = """
+                    SELECT s.ShipmentID, u.UserID AS UserId, p.ProductID AS ProductId, s.CreatedAt FROM Shipment s JOIN
+                    users u ON s.UserID = u.userID
+                    JOIN products p ON s.ProductID = p.ProductID
+                    ORDER BY s.ShipmentID ASC;
+                    """;
+            PreparedStatement pst = conn.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+            while(rs.next()){
+                model.addRow(new Object[]{
+                        rs.getInt("ShipmentID"),
+                        rs.getString("UserId"),
+                        rs.getString("ProductId"),
+                        rs.getDate("CreatedAt")
+                });
+            }
+            loadOrdersTable();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to load shipments: "+e.getMessage());
         }
     }
 
-    private void exportUsers() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new java.io.File("users.csv"));
 
-        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            try (FileWriter fw = new FileWriter(chooser.getSelectedFile());
-                 Connection conn = com.utils.DB.getConnection();
-                 PreparedStatement pst = conn.prepareStatement("SELECT * FROM Users");
-                 ResultSet rs = pst.executeQuery()) {
-
-                fw.write("UserID,Username,Email,Role\n");
-                while (rs.next()) {
-                    fw.write(rs.getInt("UserID") + "," +
-                            rs.getString("Username") + "," +
-                            rs.getString("Email") + "," +
-                            rs.getString("Role") + "\n");
-                }
-                JOptionPane.showMessageDialog(this, "Export Successful!");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage());
-            }
+    //Order panel buttons management
+    public void deleteOrder(int orderId){
+        try(Connection conn = com.utils.DB.getConnection()){
+            String sql = "DELETE FROM Orders WHERE OrderID = ?";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setInt(1, orderId);
+            pst.executeUpdate();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to delete Order: "+e.getMessage());
         }
+    }
+
+    public void rejectOrder(int orderId){
+        try(Connection conn = com.utils.DB.getConnection()){
+            String sql = "UPDATE orders SET Status='Cancelled' WHERE OrderID = ?";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setInt(1, orderId);
+            pst.executeUpdate();
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to reject Order: "+e.getMessage());
+        }
+    }
+
+    public void approveOrder(int orderId){
+        try(Connection conn = com.utils.DB.getConnection()){
+
+            String fetchOrderQQuery = "SELECT UserID FROM orders WHERE OrderID = ?";
+            PreparedStatement pst1 = conn.prepareStatement(fetchOrderQQuery);
+            pst1.setInt(1, orderId);
+            ResultSet rs = pst1.executeQuery();
+
+            if(!rs.next()){
+                JOptionPane.showMessageDialog(this, "Please, Order not found: ");
+                return;
+            }
+            int userID = rs.getInt("UserID");
+
+            //picking any existing ProductID
+            String getProductQQuery = "SELECT ProductID FROM products ORDER BY ProductID ASC LIMIT 1";
+            PreparedStatement pst2 = conn.prepareStatement(getProductQQuery);
+            ResultSet rs2 = pst2.executeQuery();
+
+            if (!rs2.next()) {
+                JOptionPane.showMessageDialog(this, "Please, Product not found: ");
+                return;
+            }
+            int productID = rs2.getInt("ProductID");
+
+            //Updating order status
+            String sql = "UPDATE orders SET Status='Delivered' WHERE OrderID = ?";
+            PreparedStatement pst3 = conn.prepareStatement(sql);
+            pst3.setInt(1, orderId);
+            pst3.executeUpdate();
+
+            //inserting into shipment entity
+            String insertIntoShipmentQuery = """
+                    INSERT INTO shipment (UserID, ProductID) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM shipment WHERE UserID = ? AND ProductID = ?)
+                    """;
+            PreparedStatement pst4 = conn.prepareStatement(insertIntoShipmentQuery);
+            pst4.setInt(1, userID);
+            pst4.setInt(2, productID);
+            pst4.setInt(3, productID);
+            pst4.setInt(4, orderId);
+            pst4.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Order approved successfully!\nSipment created:\nUserID: "+userID+"\nProductID: "+productID);
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to approve Order: "+e.getMessage());
+        }
+    }
+
+    public void viewOrderDetails(int orderId){
+        try(Connection conn = com.utils.DB.getConnection()){
+            String orderDetailsQuery = "SELECT * FROM orders WHERE OrderID = ?";
+            PreparedStatement pst = conn.prepareStatement(orderDetailsQuery);
+            pst.setInt(1, orderId);
+            ResultSet rs = pst.executeQuery();
+
+
+            if (rs.next()){
+                String details =
+                        "OrderID: "+rs.getInt("OrderID") + "\n"+"User ID: "+rs.getInt("UserID")+
+                                "\n" + "Order Number: "+rs.getString("OrderNumber") + "\n"+"Date: "+rs.getDate("Date")+ "\n" +
+                                "Status: "+rs.getString("Status") + "\n"+ "Total Amount: "+rs.getDouble("TotalAmount")+
+                                "\n" + "Payment Method: "+rs.getString("PaymentMethod") + "\n"+"Notes: "+rs.getString("Notes");
+                JOptionPane.showMessageDialog(this, details, "OrderDetails", JOptionPane.INFORMATION_MESSAGE);
+            }else {
+                JOptionPane.showMessageDialog(this, "Order Detail not found");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to view Order Details: "+e.getMessage());
+        }
+    }
+
+    public void exportTableToCSV(JTable table){
+        try{
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Exported Data");
+            fileChooser.setSelectedFile(new java.io.File("E-BUY_SMART_Export.xls"));
+
+            int userSelection = fileChooser.showSaveDialog(this);
+            if(userSelection != JFileChooser.APPROVE_OPTION){
+                return;
+            }
+            java.io.File fileToSave = fileChooser.getSelectedFile();
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            try(java.io.PrintWriter csvWriter = new java.io.PrintWriter(fileToSave)){
+                //write header row
+                for(int i = 0; i < model.getColumnCount(); i++){
+                    csvWriter.print(model.getColumnName(i));
+                    if (i<model.getColumnCount()-1) csvWriter.print("\t");
+                }
+                csvWriter.println("\n");
+
+                //write rows for data
+                for(int row = 0; row < model.getRowCount(); row++){
+                    for(int col = 0; col < model.getColumnCount(); col++){
+                        Object value = model.getValueAt(row, col);
+                        csvWriter.print(value == null ? "" : value.toString().replace("\t", " "));
+                        if (col<model.getColumnCount()-1) csvWriter.print("\t");
+                    }
+                    csvWriter.println();
+                }
+                csvWriter.flush();
+            }
+            JOptionPane.showMessageDialog(this, "Exported Data saved successfully!"+fileToSave.getAbsolutePath()+"\n\n____________________________________________________________" +
+                    "\n"+"E-BUY SMART | E-COMMERCE PORTAL SYSTEM\nServed by" +
+                    " www.nayituriki.com@gmail.com 2025\nADMIN: "+Session.CurrentUserFullName);
+
+        }catch (Exception e){
+            JOptionPane.showMessageDialog(this, "Failed to export data"+ e.getMessage());
+        }
+
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
-        if (!isAuthenticated()) {
-            JOptionPane.showMessageDialog(this, "Session expired!");
-            dispose();
-            new Users().setVisible(true);
-            return;
-        }
-
         Object src = e.getSource();
-
         if (src == logoutButton) {
-            dispose();
-            new Users().setVisible(true);
-        } else if (src == refreshButton) {
-            loadUsersTable();
-            loadProductsTable();
-            loadOrdersTable();
-        } else if (src == exportButton) {
-            exportUsers();
-        } else if (src == viewOrderButton && isRowSelected(orderTable)) {
-            JOptionPane.showMessageDialog(this, "Viewing order details...");
-        } else if (src == approveOrderButton && isRowSelected(orderTable)) {
-            JOptionPane.showMessageDialog(this, "Order Approved!");
-        } else if (src == rejectOrderButton && isRowSelected(orderTable)) {
-            JOptionPane.showMessageDialog(this, "Order Rejected!");
-        } else if (src == deleteOrderButton && isRowSelected(orderTable)) {
-            JOptionPane.showMessageDialog(this, "Order Deleted!");
-        } else if (e.getActionCommand().equals("Manage Users")) {
-            dispose();
-            new AdminUserPanelManagement().setVisible(true);
-        } else if (e.getActionCommand().equals("Manage Products")) {
+            int confirm = JOptionPane.showConfirmDialog(null, "Are You Sure To Log Out?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                dispose();
+                new Users().setVisible(true);
+            }
+        }
+        else if (src == exportButton) {
+            int selectedIndex = tabbedPane.getSelectedIndex();
+            JTable selectedTable;
+
+            //choosing table based on selected tab
+            if (selectedIndex == 0) selectedTable = usersTable;
+            else if (selectedIndex == 1) selectedTable = productTable;
+            else if (selectedIndex == 2) selectedTable = orderTable;
+            else {
+                JOptionPane.showMessageDialog(null, "No table to be exported in this tab!");
+                return;
+            }
+            exportTableToCSV(selectedTable);
+
+        }
+        else if (src == viewOrderButton) {
+            int row = orderTable.getSelectedRow();
+            if(row == -1){
+                JOptionPane.showMessageDialog(null, "Please Select Order.");
+                return;
+            }
+            int orderId = (int)orderTable.getValueAt(row, 0);
+            viewOrderDetails(orderId);
+            String adminName = Session.CurrentUserFullName;
+            JOptionPane.showMessageDialog(this, "Viewing Orders Details was Successful!" +"\n" +"Signature: "+adminName );
+        }
+        else if (src == approveOrderButton) {
+            int row = orderTable.getSelectedRow();
+            if (row == -1){
+                JOptionPane.showMessageDialog(this, "Please Select Order To Approve!");
+                return;
+            }
+            int orderId = (int)orderTable.getValueAt(row, 0);
+            int confirm = JOptionPane.showConfirmDialog(null, "Are You Sure To Approve this Order?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                approveOrder(orderId);
+                loadOrdersTable();
+                JOptionPane.showMessageDialog(this, "✅ Order approved!");
+
+            }
+        }
+        else if (src == rejectOrderButton) {
+            int row = orderTable.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Please Select Order ID to be rejected!");
+                return;
+            }
+            int orderId = (int)orderTable.getValueAt(row, 0);
+            int confirm =  JOptionPane.showConfirmDialog(null, "Are You Sure To Reject Order?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                rejectOrder(orderId);
+                loadOrdersTable();
+                JOptionPane.showMessageDialog(this, "Order Rejected successfully!");
+            }
+        }
+        else if (src == deleteOrderButton) {
+            int row = orderTable.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Please Select an Order ID to be deleted!");
+                return;
+            }
+            int orderId = (int) orderTable.getValueAt(row, 0);
+            int confirm =  JOptionPane.showConfirmDialog(null, "Are You Sure To Delete this Order?");
+            if (confirm == JOptionPane.YES_OPTION) {
+                deleteOrder(orderId);
+                loadOrdersTable();
+                JOptionPane.showMessageDialog(this, "Order Deleted successfully!");
+            }
+        }else if (e.getActionCommand().equals("Manage Products")) {
             dispose();
             new AdminProductPanel().setVisible(true);
+        }else if (e.getActionCommand().equals("Manage Users")) {
+            dispose();
+            new AdminUserPanelManagement().setVisible(true);
         }
+
+    }
+    public static void main(String[] args) {
+        new AdminPanel("Admin");
     }
 
-    public static void main(String[] args) {
-        new AdminPanel(1, "ADMIN", "Admin");
-    }
+
 }

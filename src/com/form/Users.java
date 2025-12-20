@@ -135,12 +135,10 @@ public class Users extends JFrame implements ActionListener {
                        dispose();
                        //Chose dashboard based on role
                        if ("Admin".equalsIgnoreCase(rs.getString("Role"))) {
-                           new com.panel.AdminPanel(rs.getString("FullName")).setVisible(true);
+                           new AdminPanel(Session.CurrentUserFullName).setVisible(true);
                        }else {
                            new UserDashboard().setVisible(true);
                        }
-
-
                        // TODO: Open your dashboard here
                    }
 

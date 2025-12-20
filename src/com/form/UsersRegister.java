@@ -124,7 +124,7 @@ public class UsersRegister extends JFrame implements ActionListener {
             }
             try(Connection conn = com.utils.DB.getConnection()){
                 String sql = "INSERT INTO users (Username, PasswordHash, Email, FullName, Role) VALUES (?, ?, ?, ?, ?)";
-                        var ps = conn.prepareStatement(sql);
+                var ps = conn.prepareStatement(sql);
                 ps.setString(1, uname);
                 ps.setString(2, pass);
                 ps.setString(3, mail);
@@ -132,7 +132,7 @@ public class UsersRegister extends JFrame implements ActionListener {
                 ps.setString(5, role.isEmpty() ? "Customer" : role);
                 if(role.equals("Admin")){
                     int confirm = JOptionPane.showConfirmDialog(this, "Please ❌ you are not allowed to register as admin \n "+
-                     "Contact this number for help 0780505948! \n\nWould you like to repeat?");
+                            "Contact this number for help 0780505948! \n\nWould you like to repeat?");
                     if (confirm == JOptionPane.YES_OPTION) {
                         dispose();
                         UsersRegister usersRegister = new UsersRegister();
@@ -146,31 +146,31 @@ public class UsersRegister extends JFrame implements ActionListener {
 
                 }else {
 
-                int rows = ps.executeUpdate();
-                if (rows > 0) {
+                    int rows = ps.executeUpdate();
+                    if (rows > 0) {
 
-                    //progress bar before confirmation message
-                    JProgressBar progressBar = new JProgressBar(0,100);
-                    progressBar.setStringPainted(true);
-                    JOptionPane pane = new JOptionPane(progressBar,JOptionPane.INFORMATION_MESSAGE,JOptionPane.DEFAULT_OPTION,null,new Object[]{},null);
-                    JDialog dialog = pane.createDialog("Registration Processing....");
-                    new Thread(() -> {
-                        for(int i = 0; i < 100; i++){
-                            progressBar.setValue(i);
-                            try{Thread.sleep(30);}
-                            catch (InterruptedException ex){
-                                ex.printStackTrace();
+                        //progress bar before confirmation message
+                        JProgressBar progressBar = new JProgressBar(0,100);
+                        progressBar.setStringPainted(true);
+                        JOptionPane pane = new JOptionPane(progressBar,JOptionPane.INFORMATION_MESSAGE,JOptionPane.DEFAULT_OPTION,null,new Object[]{},null);
+                        JDialog dialog = pane.createDialog("Registration Processing....");
+                        new Thread(() -> {
+                            for(int i = 0; i < 100; i++){
+                                progressBar.setValue(i);
+                                try{Thread.sleep(30);}
+                                catch (InterruptedException ex){
+                                    ex.printStackTrace();
+                                }
                             }
-                        }
-                        dialog.dispose();
-                    }).start();
-                    dialog.setVisible(true);
-                    JOptionPane.showMessageDialog(null, "✅ Registration successful!");
-                    dispose();
-                    new Users().setVisible(true);
-                } else{
-                    JOptionPane.showMessageDialog(null," Registration failed.");
-                }}
+                            dialog.dispose();
+                        }).start();
+                        dialog.setVisible(true);
+                        JOptionPane.showMessageDialog(null, "✅ Registration successful!");
+                        dispose();
+                        new Users().setVisible(true);
+                    } else{
+                        JOptionPane.showMessageDialog(null," Registration failed.");
+                    }}
             } catch (Exception ex){
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(null, "⚠\uFE0F Database error:" + ex.getMessage());
@@ -179,8 +179,4 @@ public class UsersRegister extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
 
     }
-    public static void main(String[] args){
-        UsersRegister users = new UsersRegister();
-    }
 }
-
