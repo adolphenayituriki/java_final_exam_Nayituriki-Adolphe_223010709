@@ -153,7 +153,7 @@ Shipment (ShipmentID, OrderID, ShipmentStatus, Date)
 Relationships use foreign keys and enforce data integrity. Passwords are hashed using SHA-256.
 
 Screenshots
-## The following Screenshots are visible on the project report
+**The following Screenshots are visible on the project report**
 Login Screen
 
 Admin Dashboard
@@ -166,7 +166,7 @@ Order Management
 
 Customer Dashboard
 
-Future Enhancements
+**Future Enhancements**
 Online payment gateway integration (PayPal, Stripe, Mobile Money)
 
 Responsive web or mobile version
