@@ -109,21 +109,26 @@ E-CommercePortalSystem/
 │  │  ├─ AdminProductPanel.java
 │  │  ├─ Users.java
 │  │  └─ UsersRegister.java
+│  │  ├─ BackgroundPanel.java
+│  │  ├─ UserDashboard.java
+│  │  ├─ CategoryProductQuery.java
 │  │
 │  ├─ com.panel/        # Multi-tab panels for Admin
 │  │  ├─ AdminPanel.java
+│  │  ├─ OrderManagementPanel.java
 │  │  └─ AddProductPanel.java
 │  │
 │  ├─ com.utils/        # Utilities: DB connection & session management
 │  │  ├─ DB.java
 │  │  └─ Session.java
 │  │
-│  ├─ com.test/         # Testing classes
+│  ├─ com.test/
+│  │  ├─ TestUserRegister.java    # Testing classes
 │  │  └─ TestUsers.java
 │  │
 │  └─ com.images/       # Image resources for GUI (icons, backgrounds)
 ├─ database/
-│  └─ ECommerceDB.sql   # SQL scripts to create tables and initial data
+│  └─ E-Commerce_portal_system.sql   # SQL scripts to create tables and initial data
 ├─ resources/
 │  └─ screenshots/      # Screenshot placeholders for README
 ├─ README.md
