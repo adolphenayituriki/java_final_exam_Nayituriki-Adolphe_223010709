@@ -153,8 +153,7 @@ Shipment (ShipmentID, OrderID, ShipmentStatus, Date)
 Relationships use foreign keys and enforce data integrity. Passwords are hashed using SHA-256.
 
 Screenshots
-(Add actual screenshots in your repository for better visualization)
-
+## The following Screenshots are visible on the project report
 Login Screen
 
 Admin Dashboard
